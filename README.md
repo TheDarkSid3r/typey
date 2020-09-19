@@ -1,2 +1,0 @@
-# typey
-a thing
