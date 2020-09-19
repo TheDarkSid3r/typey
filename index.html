@@ -24,18 +24,23 @@
         margin: 0px auto;
     }
 
-    .sentence {
-        position: relative;
-        width: 100%;
+    .sentences {
         font-size: 30px;
         font-family: sans-serif;
         line-height: 100%;
+    }
+
+    .sentence {
+        position: relative;
+        width: 100%;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         -khtml-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
+        box-sizing: border-box;
+        padding: 10px 0px;
     }
 
     .word {
@@ -56,7 +61,7 @@
 
 <body>
     <div class="wrapper">
-        <div class="sentence">Connecting&hellip;<br />(this could take a while)</div>
+        <div class="sentences">Connecting&hellip;<br />(this could take a while)</div>
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -65,30 +70,37 @@
 
 <script>
     $(() => {
-        var socket = new WebSocket("wss://darksid3r-letters.herokuapp.com");
+        //var socket = new WebSocket("wss://darksid3r-letters.herokuapp.com");
+        var socket = new WebSocket("ws://localhost:8080");
         var socketclosed = false;
         socket.onopen = () => {
+            var sentences = [];
             console.log("Socket opened");
-            $(".sentence").html("Start typing!");
-            var currentword = null;
-            var newCW = () => {
-                currentword = $("<div/>").addClass("word");
-                $(".sentence").append(currentword);
+            $(".sentences").html("Start typing!");
+            var currentword = [];
+            var newCW = (id) => {
+                currentword[id] = $("<div/>").addClass("word");
+                sentences[id].append(currentword[id]);
             };
             var isfirst = true;
             socket.onmessage = (e) => {
+                var data = JSON.parse(e.data);
                 if (isfirst) {
                     isfirst = false;
-                    $(".sentence").html("");
-                    newCW();
+                    $(".sentences").html("");
                 }
-                var data = JSON.parse(e.data);
+                if (!sentences[data.id]) {
+                    var s = $("<div/>").addClass("sentence");
+                    $(".sentences").append(s);
+                    sentences[data.id] = s;
+                    newCW(data.id);
+                }
                 if (data.letter === "SPACE") {
-                    $(".sentence").append($("<div/>").addClass("space").html("&nbsp;"));
-                    newCW();
+                    sentences[data.id].append($("<div/>").addClass("space").html("&nbsp;"));
+                    newCW(data.id);
                 } else {
                     var wr = $("<div/>").addClass("letter").text(data.letter).css({ color: data.color });
-                    currentword.append(wr);
+                    currentword[data.id].append(wr);
                     anime({
                         targets: wr[0],
                         opacity: [0, 1],
