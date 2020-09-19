@@ -70,8 +70,8 @@
 
 <script>
     $(() => {
-        //var socket = new WebSocket("wss://darksid3r-letters.herokuapp.com");
-        var socket = new WebSocket("ws://localhost:8080");
+        var socket = new WebSocket("wss://darksid3r-letters.herokuapp.com");
+        //var socket = new WebSocket("ws://localhost:8080");
         var socketclosed = false;
         socket.onopen = () => {
             var sentences = [];
