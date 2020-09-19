@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<style>
+    body {
+        margin: 0px;
+        color: #000;
+        background-color: #fff;
+    }
+
+    .wrapper {
+        position: relative;
+        display: block;
+        box-sizing: border-box;
+        width: 700px;
+        max-width: 100%;
+        padding: 50px 20px;
+        margin: 0px auto;
+    }
+
+    .sentence {
+        position: relative;
+        width: 100%;
+        font-size: 30px;
+        font-family: sans-serif;
+        line-height: 100%;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .word {
+        position: relative;
+        display: inline-block;
+    }
+
+    .letter {
+        position: relative;
+        display: inline-block;
+    }
+
+    .space {
+        position: relative;
+        display: inline-block;
+    }
+</style>
+
+<body>
+    <div class="wrapper">
+        <div class="sentence">Connecting&hellip;<br />(this could take a while)</div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="anime.js"></script>
+</body>
+
+<script>
+    $(() => {
+        var socket = new WebSocket("wss://darksid3r-letters.herokuapp.com");
+        var socketclosed = false;
+        socket.onopen = () => {
+            console.log("Socket opened");
+            $(".sentence").html("Start typing!");
+            var currentword = null;
+            var newCW = () => {
+                currentword = $("<div/>").addClass("word");
+                $(".sentence").append(currentword);
+            };
+            var isfirst = true;
+            socket.onmessage = (e) => {
+                if (isfirst) {
+                    isfirst = false;
+                    $(".sentence").html("");
+                    newCW();
+                }
+                var data = JSON.parse(e.data);
+                if (data.letter === "SPACE") {
+                    $(".sentence").append($("<div/>").addClass("space").html("&nbsp;"));
+                    newCW();
+                } else {
+                    var wr = $("<div/>").addClass("letter").text(data.letter).css({ color: data.color });
+                    currentword.append(wr);
+                    anime({
+                        targets: wr[0],
+                        opacity: [0, 1],
+                        translateX: [10, 0],
+                        easing: "easeOutQuart",
+                        duration: 300
+                    });
+                }
+            };
+            $(window).on("keydown", (e) => {
+                if (socketclosed) return;
+                socket.send(e.key);
+            });
+        };
+        socket.onerror = (e) => {
+            console.log("Socket error", e);
+            $(".sentence").html("Connection error");
+            socketclosed = true;
+        };
+        socket.onclose = (e) => {
+            console.log("Socket closed", e);
+            if (!socketclosed) $(".sentence").html("WebSocket closed");
+            socketclosed = true;
+        };
+    });
+</script>
+
+</html>
